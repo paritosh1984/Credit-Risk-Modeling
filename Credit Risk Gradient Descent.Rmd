@@ -1,0 +1,158 @@
+---
+title: "Credit_Risk Model_Gradient_Descent"
+output: html_document
+---
+```{r}
+loan = read.csv("loan.csv" , na = "")
+```
+
+```{r}
+library(tidyverse)
+loan = loan %>%
+        select(loan_status , loan_amnt , int_rate , grade , emp_length , home_ownership , 
+               annual_inc , term)
+loan
+```
+
+```{r}
+sapply(loan , function(x) sum(is.na(x)))
+```
+
+```{r}
+loan = loan %>%
+        filter(!is.na(annual_inc) , 
+               !(home_ownership %in% c('NONE' , 'ANY')) , 
+               emp_length != 'n/a')
+attach(loan)
+```
+
+Exploratory Data Analysis
+
+```{r}
+loan %>%
+        count(loan_status) %>%
+        ggplot(aes(x = reorder(loan_status , desc(n)) , y = n , fill = n)) + 
+        geom_col() + 
+        coord_flip() + 
+        labs(x = 'Loan Status' , y = 'Count')
+```
+
+```{r}
+loan = loan %>%
+        mutate(loan_outcome = ifelse(loan_status %in% c('Charged Off' , 'Default') , 
+                                     1, 
+                                     ifelse(loan_status == 'Fully Paid' , 0 , 'No info')
+                                     ))
+
+barplot(table(loan$loan_outcome) , col = 'lightblue')
+```
+
+```{r}
+loan2 = loan %>%
+        select(-loan_status) %>%
+        filter(loan_outcome %in% c(0 , 1))
+```
+
+```{r}
+loan2$loan_outcome <- as.numeric(loan2$loan_outcome)
+```
+
+```{r}
+plot(loan2$loan_amnt,loan2$annual_inc,col=as.factor(loan2$loan_outcome),xlab="Loan Amount",ylab="Annual Income")
+```
+
+```{r}
+str(loan2)
+```
+
+```{r}
+library(caret)
+#Converting every categorical variable to numerical using dummy variables
+dmy <- dummyVars("~ .", data = loan2,fullRank = T)
+loan_transformed <- data.frame(predict(dmy, newdata = loan2))
+
+#Checking the structure of transformed train file
+str(loan_transformed)
+```
+
+```{r}
+#Predictor variables
+X <- as.matrix(loan_transformed[,c(-27)])
+```
+
+```{r}
+#Add ones to X
+X <- cbind(rep(1,nrow(X)),X)
+```
+
+```{r}
+#Response variable
+Y <- loan_transformed$loan_outcome
+```
+
+
+Our first step is to implement sigmoid function.
+```{r}
+#Sigmoid function
+sigmoid <- function(z)
+{
+g <- 1/(1+exp(-z))
+return(g)
+}
+```
+
+Now we will implement cost function
+```{r}
+#Cost Function
+cost <- function(theta)
+{
+m <- nrow(X)
+g <- sigmoid(X%*%theta)
+J <- (1/m)*sum((-Y*log(g)) - ((1-Y)*log(1-g)))
+return(J)
+}
+```
+
+
+Let’s test this cost function with initial theta parameters. We will set theta parameters equal to zero initially and check the cost.
+```{r}
+#Initial theta
+initial_theta <- rep(0,ncol(X))
+
+#Cost at inital theta
+cost(initial_theta)
+```
+
+
+```{r}
+str(X)
+```
+
+
+You will find cost is 0.693 with initial parameters. Now, our objective is to minimize this cost and derive the optimal value of the thetas.
+
+```{r}
+# Derive theta using gradient descent using optim function
+theta_optim <- optim(par=initial_theta,fn=cost)
+
+#set theta
+theta <- theta_optim$par
+
+#cost at optimal value of the theta
+theta_optim$value
+```
+
+```{r}
+prob <- sigmoid(t(c(1,30000,22.35,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,100000,0))%*%theta)
+prob
+```
+
+
+
+
+
+
+
+
+
+
