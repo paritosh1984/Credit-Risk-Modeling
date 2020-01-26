@@ -69,16 +69,3 @@ proc sgplot data=loan_std;
 	yaxis grid;
 	keylegend / location=inside position=topleft across=1;
 run;
-
-/* Split data into two datasets : 70%- training 30%- testing */
-proc surveyselect data=loan_std out=split seed=1234 samprate=.8 outall;
-run;
-
-data training_set testing_set;
-	set split;
-
-	if selected=1 then
-		output training_set;
-	else
-		output testing_set;
-run;
