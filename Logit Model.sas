@@ -34,8 +34,3 @@ proc npar1way data=Logit_Test edf;
 class emp_length;
 var p_1 p_0;
 run;
-
-proc freq data=logit_test order=data;
-         weight ;
-         tables Test*Response / senspec;
-         run;
